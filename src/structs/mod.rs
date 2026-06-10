@@ -1,3 +1,5 @@
+use crate::structs::db::State;
+
 pub mod db;
 
 pub struct DeleteInput {
@@ -26,14 +28,14 @@ impl ExistsInput {
 
 pub struct InsertInput {
     pub key: String,
-    pub value: String,
+    pub state: State,
 }
 
 impl InsertInput {
-    pub fn new(key: &str, value: &str) -> Self {
+    pub fn new(key: &str, state: State) -> Self {
         Self {
             key: key.to_owned(),
-            value: value.to_owned(),
+            state,
         }
     }
 }

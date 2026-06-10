@@ -1,13 +1,32 @@
-use crate::server::run_server;
+use std::{io::Write, net::TcpListener};
+
+use crate::{extractors::resp_error, server::run_server, structs::db::DataBase};
 
 mod error;
+mod extractors;
 mod functions;
 mod server;
 mod structs;
-mod extractors;
+mod shared;
 
 fn main() {
-    if let Err(err) = run_server() {
-        eprintln!("error occured: {err:#?}");
+    let binding = TcpListener::bind("127.0.0.1:3030").expect("failed to listen TCP on port :3030");
+    let mut db = DataBase::new();
+
+    for stream in binding.incoming() {
+        println!("client connected");
+        let mut stream = stream.expect("failed to parse stream");
+
+        if let Err(err) = run_server(&stream, &mut db) {
+            match err {
+                error::AppError::ServerError(data) => {
+                    stream
+                        .write_all(resp_error(&data).as_bytes())
+                        .expect("failed to send error!");
+                }
+
+                _ => unreachable!(),
+            }
+        }
     }
 }

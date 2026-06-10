@@ -25,7 +25,7 @@ pub fn resp_string(value: &str) -> String {
     format!("${value_length}\r\n{value}\r\n")
 }
 
-pub fn resp_integer(value: u8) -> String {
+pub fn resp_integer(value: i128) -> String {
     format!(":{value}\r\n")
 }
 
@@ -40,4 +40,8 @@ pub fn resp_array(value: Vec<String>) -> String {
     }
 
     format!("*{vec_length}\r\n{lines}")
+}
+
+pub fn resp_error(value: &str) -> String {
+    format!("-ERR {value}\r\n")
 }
