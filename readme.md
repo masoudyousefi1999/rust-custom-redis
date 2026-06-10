@@ -39,7 +39,7 @@ The server communicates using the Redis Serialization Protocol (RESP), allowing 
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/masoudyousefi1999/rust-custom-redis
 cd redis-clone
 ```
 
