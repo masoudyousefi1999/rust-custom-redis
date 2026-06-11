@@ -5,13 +5,16 @@ use crate::{extractors::resp_error, server::run_server, structs::db::DataBase};
 mod error;
 mod extractors;
 mod functions;
+mod save_db;
 mod server;
-mod structs;
 mod shared;
+mod structs;
 
 fn main() {
     let binding = TcpListener::bind("127.0.0.1:3030").expect("failed to listen TCP on port :3030");
     let mut db = DataBase::new();
+
+    save_db::load(&mut db);
 
     for stream in binding.incoming() {
         println!("client connected");

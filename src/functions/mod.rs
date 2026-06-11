@@ -1,13 +1,14 @@
-use std::time::{Duration, Instant};
-
 use crate::{
     error::{AppError, AppResult},
     extractors,
+    functions::utils::set_expire_time,
     structs::{
         DeleteInput, ExistsInput, GetInput, InsertInput,
         db::{DataBase, State},
     },
 };
+
+mod utils;
 
 pub fn del_command(db: &mut DataBase, key: Option<String>) -> AppResult<String> {
     let key = key.ok_or(AppError::LogicalError(
@@ -31,7 +32,7 @@ pub fn keys_command(db: &DataBase) -> AppResult<String> {
         return Ok(extractors::resp_empty_data());
     }
 
-    Ok(extractors::resp_array(keys))
+    Ok(extractors::resp_array(&keys))
 }
 
 pub fn set_command(
@@ -66,9 +67,9 @@ pub fn get_command(db: &mut DataBase, key: Option<String>) -> AppResult<String> 
 
     if let Some(data) = extacted {
         if let Some(expire) = data.expire {
-            let time = expire.duration_since(Instant::now());
+            let expire_time = utils::expire_time(expire)?;
 
-            if time.as_secs() == 0 {
+            if expire_time == 0 {
                 db.del(&key);
                 return Ok(extractors::resp_empty_data());
             }
@@ -103,7 +104,7 @@ pub fn expire_command(
         return Err(AppError::LogicalError("key not founded.".to_string()));
     };
 
-    let expire_time = Instant::now() + Duration::from_secs(expire as u64);
+    let expire_time = set_expire_time(expire)?;
 
     let insert_input = InsertInput::new(&key, State::new(&current_value.value, Some(expire_time)));
 
@@ -138,14 +139,14 @@ pub fn ttl_command(db: &mut DataBase, key: Option<String>) -> AppResult<String> 
             return Ok(extractors::resp_integer(-1));
         };
 
-        let time = expire.duration_since(Instant::now());
+        let expire_time = utils::expire_time(expire)?;
 
-        if time.as_secs() == 0 {
+        if expire_time == 0 {
             db.del(&key);
             return Ok(extractors::resp_integer(-2));
         }
 
-        return Ok(extractors::resp_integer(time.as_secs() as i128));
+        return Ok(extractors::resp_integer(expire_time as i128));
     }
 
     return Ok(extractors::resp_integer(-2));

@@ -1,6 +1,7 @@
 use std::{
     io::{Read, Write},
     net::TcpStream,
+    time::{Duration, Instant},
 };
 
 use crate::{
@@ -10,12 +11,19 @@ use crate::{
         del_command, exists_command, expire_command, get_command, keys_command, set_command,
         ttl_command,
     },
-    shared,
+    save_db, shared,
     structs::db::DataBase,
 };
 
 pub fn run_server(mut stream: &TcpStream, mut db: &mut DataBase) -> AppResult<()> {
+    let mut last_save_time = Instant::now();
+    let save_time_out = Duration::from_secs(10);
     loop {
+        if last_save_time.elapsed() > save_time_out {
+            save_db::save(db);
+            last_save_time = Instant::now();
+        };
+
         let mut buffer = [0; 1024];
         let bytes_read = stream.read(&mut buffer)?;
 
@@ -81,14 +89,14 @@ pub fn run_server(mut stream: &TcpStream, mut db: &mut DataBase) -> AppResult<()
             }
 
             "COMMANDS" => {
-                let available_commands = extractors::resp_array(vec![
-                    "set key value".to_string(),
-                    "get key".to_string(),
-                    "del key".to_string(),
-                    "exists key".to_string(),
-                    "expire key time(in sec)".to_string(),
-                    "ttl key".to_string(),
-                    "keys".to_string(),
+                let available_commands = extractors::resp_array(&vec![
+                    "set key value",
+                    "get key",
+                    "del key",
+                    "exists key",
+                    "expire key time(in sec)",
+                    "ttl key",
+                    "keys",
                 ]);
 
                 stream.write_all(available_commands.as_bytes())?;

@@ -29,7 +29,7 @@ pub fn resp_integer(value: i128) -> String {
     format!(":{value}\r\n")
 }
 
-pub fn resp_array(value: Vec<String>) -> String {
+pub fn resp_array(value: &[&str]) -> String {
     let vec_length = value.len();
     let mut lines = String::new();
 
